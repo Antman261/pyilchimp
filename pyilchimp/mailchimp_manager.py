@@ -33,6 +33,10 @@ class ResourceManager(object):
                 return json.loads(res.text, use_decimal=True)
             print res, url
             return False
+        if type == 'POST':
+            res = requests.post(url, auth=(self.parent.auth_user, self.parent.api_key),
+                                data={})
+            return json.loads(res.text)
 
     def get(self, id_or_resource, filters=None):
         if isinstance(id_or_resource, self.subject_class):
@@ -43,14 +47,14 @@ class ResourceManager(object):
             id = id_or_resource
             resource_path = '{}/{}'.format(self.path, id)
             data = self._request(resource_path, filters)
-            return self.subject_class()._update_with_dict(data)
+            return self.subject_class(manager=self)._update_with_dict(data)
 
     def all(self, filters=None):
         data = self._request(self.path, filters)
         key_name = self.subject_name.lower()+'s'
         result_list = []
         for item in data[key_name]:
-            result_list.append(self.subject_class(data_dict=item))
+            result_list.append(self.subject_class(data_dict=item, manager=self))
         return result_list
 
 
@@ -62,9 +66,10 @@ class Resource(object):
     """
     Resources in Mailchimp can be queried, filtered, AND perform actions.
     """
-    def __init__(self, id=None, data_dict=None):
+    def __init__(self, id=None, data_dict=None, manager=None):
         self.id = id
         self.name = self.__class__.__name__
+        self.manager = manager
         if data_dict is not None:
             self._update_with_dict(data_dict)
 
@@ -92,3 +97,7 @@ class Campaign(Resource):
         if human:
             return self.settings['subject_line'].encode('ascii', 'ignore')
         return self.get_resource_path()
+
+    def pause(self):
+        path = '{}/actions/pause'.format(self.get_resource_path())
+        self.manager._request(path, type='POST')

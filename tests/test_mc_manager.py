@@ -1,7 +1,7 @@
 import unittest
-from api.lib.mailchimp_manager import *
-from hypothesis import given
-import hypothesis.strategies as st
+from pyilchimp.mailchimp_manager import *
+# from hypothesis import given
+# import hypothesis.strategies as st
 import os
 """
 This test suite needs http mocking to speed up and modularise tests.
